@@ -1,4 +1,7 @@
 var fs = require("fs");
+const express = require("express");
+const app = express();
+
 var readline = require("readline");
 var { google } = require("googleapis");
 var OAuth2 = google.auth.OAuth2;
@@ -18,7 +21,7 @@ fs.readFile("client_secret.json", function processClientSecrets(err, content) {
     return;
   }
   // Authorize a client with the loaded credentials, then call the YouTube API.
-  authorize(JSON.parse(content), getChannel);
+  authorize(JSON.parse(content), (e) => console.log(e));
 });
 
 /**
@@ -53,80 +56,65 @@ function authorize(credentials, callback) {
  * @param {getEventsCallback} callback The callback to call with the authorized
  *     client.
  */
-function getNewToken(oauth2Client, callback) {
+async function getNewToken(oauth2Client, callback) {
   var authUrl = oauth2Client.generateAuthUrl({
     access_type: "offline",
     scope: SCOPES,
   });
-  console.log("Authorize this app by visiting this url: ", authUrl);
-  var rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
+  // console.log("Authorize this app by visiting this url: ", authUrl);
+  // var rl = readline.createInterface({
+  //   input: process.stdin,
+  //   output: process.stdout,
+  // });
+  // rl.question("Enter the code from that page here: ", function (code) {
+  //   rl.close();
+  //   oauth2Client.getToken(code, function (err, token) {
+  //     if (err) {
+  //       console.log("Error while trying to retrieve access token", err);
+  //       return;
+  //     }
+  //     oauth2Client.credentials = token;
+  //     storeToken(token);
+  //     callback(oauth2Client);
+  //   });
+  // });
+  app.get(authUrl, (res, req) => {
+    console.log("new", res);
   });
-  rl.question("Enter the code from that page here: ", function (code) {
-    rl.close();
-    oauth2Client.getToken(code, function (err, token) {
-      if (err) {
-        console.log("Error while trying to retrieve access token", err);
-        return;
-      }
-      oauth2Client.credentials = token;
-      storeToken(token);
-      callback(oauth2Client);
-    });
-  });
+  // response = await fetch(authUrl).then((res) => console.log(res));
 }
 
-/**
- * Store token to disk be used in later program executions.
- *
- * @param {Object} token The token to store to disk.
- */
-function storeToken(token) {
-  try {
-    fs.mkdirSync(TOKEN_DIR);
-  } catch (err) {
-    if (err.code != "EEXIST") {
-      throw err;
-    }
-  }
-  fs.writeFile(TOKEN_PATH, JSON.stringify(token), (err) => {
-    if (err) throw err;
-    console.log("Token stored to " + TOKEN_PATH);
-  });
-}
+// /**
+//  * Store token to disk be used in later program executions.
+//  *
+//  * @param {Object} token The token to store to disk.
+//  */
+// function storeToken(token) {
+//   try {
+//     fs.mkdirSync(TOKEN_DIR);
+//   } catch (err) {
+//     if (err.code != "EEXIST") {
+//       throw err;
+//     }
+//   }
+//   fs.writeFile(TOKEN_PATH, JSON.stringify(token), (err) => {
+//     if (err) throw err;
+//     console.log("Token stored to " + TOKEN_PATH);
+//   });
+// }
 
-/**
- * Lists the names and IDs of up to 10 files.
- *
- * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
- */
-function getChannel(auth) {
-  var service = google.youtube("v3");
-  service.playlistItems
-    .list({
-      auth,
-      part: "snippet,contentDetails",
-      maxResults: 5,
-      playlistId: "PLYgvYtGNe4y7gInqc540yvDcMQXr_4YC-",
-    })
-    .then(
-      (res) => {
-        console.log("your playlist ", res.data.items);
-      },
-      function (err) {
-        console.error("messed up?", err);
-      }
-    );
-}
-
+// /**
+//  * Lists the names and IDs of up to 10 files.
+//  *
+//  * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
+//  */
 // function getChannel(auth) {
 //   var service = google.youtube("v3");
 //   service.channels.list(
 //     {
 //       auth: auth,
 //       part: "snippet,contentDetails,statistics",
-//       forUsername: "MimiIkonn",
+//       forUsername: "GoogleDevelopers",
 //     },
 //     function (err, response) {
 //       if (err) {

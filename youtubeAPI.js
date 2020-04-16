@@ -1,10 +1,7 @@
 const fs = require("fs");
-// const express = require("express");
-// const app = express();
-// const auth_link = require("authorize");
+const url = require("url");
 const readline = require("readline");
 const { google } = require("googleapis");
-// const OAuth2 = google.auth.OAuth2;
 
 const SCOPES = ["https://www.googleapis.com/auth/youtube.readonly"]; //ASK
 const TOKEN_DIR =
@@ -36,7 +33,7 @@ async function authorize(credentials) {
       getNewToken(oauth2Client);
     } else {
       oauth2Client.credentials = JSON.parse(token);
-      getPlaylist(oauth2Client);
+      getDownloadInput(oauth2Client);
     }
   });
 }
@@ -52,7 +49,7 @@ async function getNewToken(oauth2Client) {
     input: process.stdin,
     output: process.stdout,
   });
-  rl.question("enter the code from that page here : ", (code) => {
+  rl.question("Enter the code from that page here : ", (code) => {
     rl.close();
     oauth2Client.getToken(code, (err, token) => {
       if (err) {
@@ -60,7 +57,7 @@ async function getNewToken(oauth2Client) {
       }
       oauth2Client.credentials = token;
       storeToken(token);
-      getPlaylist(oauth2Client);
+      getDownloadInput(oauth2Client);
     });
   });
 }
@@ -79,14 +76,27 @@ function storeToken(token) {
   });
 }
 
-function getPlaylist(auth) {
+function getDownloadInput(auth) {
+  let rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+  rl.question("Copy the link of your playlist here: ", (playlistLink) => {
+    rl.close();
+    let link = new URL(playlistLink);
+    playlistId = link.searchParams.get("list");
+    getPlaylist(auth, playlistId);
+  });
+}
+
+function getPlaylist(auth, playlistId) {
   var service = google.youtube("v3");
   service.playlistItems
     .list({
       auth,
       part: "snippet,contentDetails",
       maxResults: 5,
-      playlistId: "PLYgvYtGNe4y7gInqc540yvDcMQXr_4YC-",
+      playlistId: playlistId,
     })
     .then(
       (res) => {
