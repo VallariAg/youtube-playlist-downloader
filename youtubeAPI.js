@@ -13,11 +13,11 @@ fs.readFile("client_secret.json", (err, content) => {
   if (err) {
     console.log("Error loading client secret file", e);
   } else {
-    authorize(JSON.parse(content), getDownloadInput);
+    authorize(JSON.parse(content));
   }
 });
 
-async function authorize(credentials, callback) {
+async function authorize(credentials) {
   const clientSecret = credentials.installed.client_secret;
   const clientId = credentials.installed.client_id;
   const redirectURL = credentials.installed.redirect_uris[0]; //ASK: can't understand value in client_secret
@@ -29,15 +29,15 @@ async function authorize(credentials, callback) {
   // check for previous tokens
   fs.readFile(TOKEN_PATH, async (err, token) => {
     if (err) {
-      getNewToken(oauth2Client, getDownloadInput);
+      getNewToken(oauth2Client);
     } else {
       oauth2Client.credentials = JSON.parse(token);
-      callback(oauth2Client);
+      getDownloadInput(oauth2Client);
     }
   });
 }
 
-function getNewToken(oauth2Client, callback) {
+function getNewToken(oauth2Client) {
   const authURL = oauth2Client.generateAuthUrl({
     access_type: "offline",
     scope: SCOPES,
